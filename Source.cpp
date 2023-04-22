@@ -1,7 +1,9 @@
 #include "Angel.h"
 #include "Sphere.h"
-#include <glm/glm.hpp>
+#include "glm/glm.hpp"
 #include <glm/ext.hpp>
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 Sphere sphere1(0.5f); 
 Sphere sphere2(0.5f);
@@ -18,9 +20,10 @@ typedef Angel::vec4 point4;
 
 GLuint vao, vbo1, vbo2, vbo3, vbo4, vbo5, vbo6, vbo7, vbo8, vbo9,
 ibo1, ibo2, ibo3, ibo4, ibo5, ibo6, ibo7, ibo8, ibo9,
-vPosition, vNormal, modelUnifrom, transAttrib, viewAttrib, projectionAttrib, colorAttribute, cameraUniform;
+vPosition, vNormal, vTexture, modelUnifrom, modelAttrib, viewAttrib, projectionAttrib, colorAttribute, cameraUniform
+, texture1, texture2, texture3, texture4, texture5, texture6, texture7, texture8, texture9, texture10;
 GLuint program;
-glm::mat4 trans;
+glm::mat4 model;
 
 glm::vec3 cameraPos, cameraTarget, cameraDirection, cameraRight, cameraUp, cameraFront;
 glm::mat4 view, projection;
@@ -31,48 +34,266 @@ float factor = 0.00025;
 
 void initLight()
 {
-    point4 light_direction(0.0, 0.0, 1.0, 0.0);
-    point4 light_poisiton1(0.5f, 0.f, 0.f, 0.f);
-    point4 light_poisiton2(-0.5f, 0.f, 0.f, 0.f);
 
-    color4 light_ambient(0.5, 0.5, 0.5, 1.0);
-    color4 light_diffuse(1.0, 1.0, 0.0, 1.0);
+    point4 light_direction(0.0, 0.0, -1.0, 0.0);
+
+    color4 light_ambient(1.0, 1.0, 1.0, 1.0);
+    color4 light_diffuse(1.0, 1.0, 1.0, 1.0);
     color4 light_specular(1.0, 1.0, 1.0, 1.0);
 
-    float light_constant = 1.f;
-    float light_linear = 0.07f;
-    float light_quadratic = 0.017f;
-
     float material_shininess = 100.f;
-    color4 material_ambient(0.0, 0.5, 0.5, 1.0);
-    color4 material_diffuse(0.0, 1.0, 1.0, 1.0);
-    color4 material_specular(0.0, 1.0, 1.0, 1.0);
+    color4 material_ambient(0.5, 0.5, 0.5, 1.0);
+    color4 material_diffuse(0.5, 0.5, 0.5, 1.0);
+    color4 material_specular(0.5, 0.5, 0.5, 1.0);
 
     glUniform4fv(glGetUniformLocation(program, "directionalLight.ambient"), 1, light_ambient);
     glUniform4fv(glGetUniformLocation(program, "directionalLight.diffuse"), 1, light_diffuse);
     glUniform4fv(glGetUniformLocation(program, "directionalLight.specular"), 1, light_specular);
     glUniform4fv(glGetUniformLocation(program, "directionalLight.direction"), 1, light_direction);
 
-    glUniform1f(glGetUniformLocation(program, "pointLights[0].constant"), light_constant);
-    glUniform1f(glGetUniformLocation(program, "pointLights[0].linear"), light_linear);
-    glUniform1f(glGetUniformLocation(program, "pointLights[0].quadratic"), light_quadratic);
-    glUniform4fv(glGetUniformLocation(program, "pointLights[0].ambient"), 1, light_ambient);
-    glUniform4fv(glGetUniformLocation(program, "pointLights[0].diffuse"), 1, light_diffuse);
-    glUniform4fv(glGetUniformLocation(program, "pointLights[0].specular"), 1, light_specular);
-    glUniform4fv(glGetUniformLocation(program, "pointLights[0].position"), 1, light_poisiton1);
-
-    glUniform1f(glGetUniformLocation(program, "pointLights[1].constant"), light_constant);
-    glUniform1f(glGetUniformLocation(program, "pointLights[1].linear"), light_linear);
-    glUniform1f(glGetUniformLocation(program, "pointLights[1].quadratic"), light_quadratic);
-    glUniform4fv(glGetUniformLocation(program, "pointLights[1].ambient"), 1, light_ambient);
-    glUniform4fv(glGetUniformLocation(program, "pointLights[1].diffuse"), 1, light_diffuse);
-    glUniform4fv(glGetUniformLocation(program, "pointLights[1].specular"), 1, light_specular);
-    glUniform4fv(glGetUniformLocation(program, "pointLights[1].position"), 1, light_poisiton2);
-
     glUniform4fv(glGetUniformLocation(program, "material.ambient"), 1, material_ambient);
     glUniform4fv(glGetUniformLocation(program, "material.diffuse"), 1, material_diffuse);
     glUniform4fv(glGetUniformLocation(program, "material.specular"), 1, material_specular);
     glUniform1f(glGetUniformLocation(program, "material.shininess"), material_shininess);
+
+    //point4 light_direction(0.0, 0.0, -1.0, 0.0);
+    //point4 light_poisiton1(0.5f, 0.f, 0.f, 0.f);
+    //point4 light_poisiton2(-0.5f, 0.f, 0.f, 0.f);
+
+    //color4 light_ambient(0.5, 0.5, 0.5, 1.0);
+    //color4 light_diffuse(1.0, 1.0, 0.0, 1.0);
+    //color4 light_specular(1.0, 1.0, 1.0, 1.0);
+
+    //float light_constant = 1.f;
+    //float light_linear = 0.07f;
+    //float light_quadratic = 0.017f;
+
+    //float material_shininess = 100.f;
+    //color4 material_ambient(0.0, 0.5, 0.5, 1.0);
+    //color4 material_diffuse(0.0, 1.0, 1.0, 1.0);
+    //color4 material_specular(0.0, 1.0, 1.0, 1.0);
+
+    //glUniform4fv(glGetUniformLocation(program, "directionalLight.ambient"), 1, light_ambient);
+    //glUniform4fv(glGetUniformLocation(program, "directionalLight.diffuse"), 1, light_diffuse);
+    //glUniform4fv(glGetUniformLocation(program, "directionalLight.specular"), 1, light_specular);
+    //glUniform4fv(glGetUniformLocation(program, "directionalLight.direction"), 1, light_direction);
+
+    //glUniform1f(glGetUniformLocation(program, "pointLights[0].constant"), light_constant);
+    //glUniform1f(glGetUniformLocation(program, "pointLights[0].linear"), light_linear);
+    //glUniform1f(glGetUniformLocation(program, "pointLights[0].quadratic"), light_quadratic);
+    //glUniform4fv(glGetUniformLocation(program, "pointLights[0].ambient"), 1, light_ambient);
+    //glUniform4fv(glGetUniformLocation(program, "pointLights[0].diffuse"), 1, light_diffuse);
+    //glUniform4fv(glGetUniformLocation(program, "pointLights[0].specular"), 1, light_specular);
+    //glUniform4fv(glGetUniformLocation(program, "pointLights[0].position"), 1, light_poisiton1);
+
+    //glUniform1f(glGetUniformLocation(program, "pointLights[1].constant"), light_constant);
+    //glUniform1f(glGetUniformLocation(program, "pointLights[1].linear"), light_linear);
+    //glUniform1f(glGetUniformLocation(program, "pointLights[1].quadratic"), light_quadratic);
+    //glUniform4fv(glGetUniformLocation(program, "pointLights[1].ambient"), 1, light_ambient);
+    //glUniform4fv(glGetUniformLocation(program, "pointLights[1].diffuse"), 1, light_diffuse);
+    //glUniform4fv(glGetUniformLocation(program, "pointLights[1].specular"), 1, light_specular);
+    //glUniform4fv(glGetUniformLocation(program, "pointLights[1].position"), 1, light_poisiton2);
+
+    //glUniform4fv(glGetUniformLocation(program, "material.ambient"), 1, material_ambient);
+    //glUniform4fv(glGetUniformLocation(program, "material.diffuse"), 1, material_diffuse);
+    //glUniform4fv(glGetUniformLocation(program, "material.specular"), 1, material_specular);
+    //glUniform1f(glGetUniformLocation(program, "material.shininess"), material_shininess);
+}
+
+void initTexture()
+{
+    stbi_set_flip_vertically_on_load(true);
+    int width, height, channels;
+
+    glGenTextures(1, &texture1);
+    glBindTexture(GL_TEXTURE_2D, texture1);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    
+    unsigned char* data1 = stbi_load("8k_mercury.jpg", &width, &height, &channels, 0);
+
+    if (data1)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data1);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+    }
+    stbi_image_free(data1);
+
+
+    glGenTextures(1, &texture2);
+    glBindTexture(GL_TEXTURE_2D, texture2);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    unsigned char* data2 = stbi_load("8k_venus_surface.jpg", &width, &height, &channels, 0);
+
+    if (data2)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data2);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+
+    stbi_image_free(data2);
+
+    glGenTextures(1, &texture3);
+    glBindTexture(GL_TEXTURE_2D, texture3);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+    unsigned char* data3 = stbi_load("8k_earth_daymap.jpg", &width, &height, &channels, 0);
+
+    if (data3)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data3);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+    }
+    stbi_image_free(data3);
+
+    glGenTextures(1, &texture4);
+    glBindTexture(GL_TEXTURE_2D, texture4);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+    unsigned char* data4 = stbi_load("8k_mars.jpg", &width, &height, &channels, 0);
+
+    if (data4)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data4);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+    }
+    stbi_image_free(data4);
+
+    glGenTextures(1, &texture5);
+    glBindTexture(GL_TEXTURE_2D, texture5);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+    unsigned char* data5 = stbi_load("8k_jupiter.jpg", &width, &height, &channels, 0);
+
+    if (data5)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data5);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+    }
+    stbi_image_free(data5);
+
+    glGenTextures(1, &texture6);
+    glBindTexture(GL_TEXTURE_2D, texture6);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+    unsigned char* data6 = stbi_load("8k_saturn.jpg", &width, &height, &channels, 0);
+
+    if (data6)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data6);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+    }
+    stbi_image_free(data6);
+
+    glGenTextures(1, &texture7);
+    glBindTexture(GL_TEXTURE_2D, texture7);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+    unsigned char* data7 = stbi_load("8k_saturn_ring_alpha.png", &width, &height, &channels, 0);
+
+    if (data7)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data7);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+    }
+    stbi_image_free(data7);
+
+    glGenTextures(1, &texture8);
+    glBindTexture(GL_TEXTURE_2D, texture8);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+    unsigned char* data8 = stbi_load("2k_uranus.jpg", &width, &height, &channels, 0);
+
+    if (data8)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data8);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+    }
+    stbi_image_free(data8);
+
+    glGenTextures(1, &texture9);
+    glBindTexture(GL_TEXTURE_2D, texture9);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+    unsigned char* data9 = stbi_load("2k_neptune.jpg", &width, &height, &channels, 0);
+
+    if (data9)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data9);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+    }
+    stbi_image_free(data9);
+
+    glGenTextures(1, &texture10);
+    glBindTexture(GL_TEXTURE_2D, texture10);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+    unsigned char* data10 = stbi_load("8k_sun.jpg", &width, &height, &channels, 0);
+
+    if (data10)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data10);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+    }
+    stbi_image_free(data10);
 }
 
 // OpenGL initialization
@@ -91,95 +312,6 @@ void init()
     glGenBuffers(1, &ibo1);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo1);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphere1.getIndexSize(), sphere1.getIndices(), GL_STATIC_DRAW);
-  
-
-    // Create and initialize a vertex buffer object
-    glGenBuffers(1, &vbo2);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo2);
-    glBufferData(GL_ARRAY_BUFFER, sphere2.getInterleavedVertexSize(), sphere2.getInterleavedVertices(), GL_STATIC_DRAW);
-
-    // Create and initialize an index buffer object
-    glGenBuffers(1, &ibo2);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo2);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphere2.getIndexSize(), sphere2.getIndices(), GL_STATIC_DRAW);
-
-
-    // Create and initialize a vertex buffer object
-    glGenBuffers(1, &vbo3);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo3);
-    glBufferData(GL_ARRAY_BUFFER, sphere3.getInterleavedVertexSize(), sphere3.getInterleavedVertices(), GL_STATIC_DRAW);
-
-    // Create and initialize an index buffer object
-    glGenBuffers(1, &ibo3);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo3);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphere3.getIndexSize(), sphere3.getIndices(), GL_STATIC_DRAW);
-
-
-    // Create and initialize a vertex buffer object
-    glGenBuffers(1, &vbo4);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo4);
-    glBufferData(GL_ARRAY_BUFFER, sphere4.getInterleavedVertexSize(), sphere4.getInterleavedVertices(), GL_STATIC_DRAW);
-
-    // Create and initialize an index buffer object
-    glGenBuffers(1, &ibo4);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo4);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphere4.getIndexSize(), sphere4.getIndices(), GL_STATIC_DRAW);
-
-
-    // Create and initialize a vertex buffer object
-    glGenBuffers(1, &vbo5);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo5);
-    glBufferData(GL_ARRAY_BUFFER, sphere5.getInterleavedVertexSize(), sphere5.getInterleavedVertices(), GL_STATIC_DRAW);
-
-    // Create and initialize an index buffer object
-    glGenBuffers(1, &ibo5);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo5);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphere5.getIndexSize(), sphere5.getIndices(), GL_STATIC_DRAW);
-
-
-    // Create and initialize a vertex buffer object
-    glGenBuffers(1, &vbo6);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo6);
-    glBufferData(GL_ARRAY_BUFFER, sphere6.getInterleavedVertexSize(), sphere6.getInterleavedVertices(), GL_STATIC_DRAW);
-
-    // Create and initialize an index buffer object
-    glGenBuffers(1, &ibo6);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo6);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphere6.getIndexSize(), sphere6.getIndices(), GL_STATIC_DRAW);
-
-
-    // Create and initialize a vertex buffer object
-    glGenBuffers(1, &vbo7);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo7);
-    glBufferData(GL_ARRAY_BUFFER, sphere7.getInterleavedVertexSize(), sphere7.getInterleavedVertices(), GL_STATIC_DRAW);
-
-    // Create and initialize an index buffer object
-    glGenBuffers(1, &ibo7);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo7);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphere7.getIndexSize(), sphere7.getIndices(), GL_STATIC_DRAW);
-
-
-    // Create and initialize a vertex buffer object
-    glGenBuffers(1, &vbo8);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo8);
-    glBufferData(GL_ARRAY_BUFFER, sphere8.getInterleavedVertexSize(), sphere8.getInterleavedVertices(), GL_STATIC_DRAW);
-
-    // Create and initialize an index buffer object
-    glGenBuffers(1, &ibo8);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo8);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphere8.getIndexSize(), sphere8.getIndices(), GL_STATIC_DRAW);
-
-
-    // Create and initialize a vertex buffer object
-    glGenBuffers(1, &vbo9);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo9);
-    glBufferData(GL_ARRAY_BUFFER, sphere9.getInterleavedVertexSize(), sphere9.getInterleavedVertices(), GL_STATIC_DRAW);
-
-    // Create and initialize an index buffer object
-    glGenBuffers(1, &ibo9);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo9);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphere9.getIndexSize(), sphere9.getIndices(), GL_STATIC_DRAW);
-
 
     // Load shaders and use the resulting shader program
     program = InitShader("vshader.glsl", "fshader.glsl");
@@ -193,7 +325,10 @@ void init()
     vNormal = glGetAttribLocation(program, "vertexNormal");
     glEnableVertexAttribArray(vNormal);
 
-    transAttrib = glGetUniformLocation(program, "trans");
+    vTexture = glGetAttribLocation(program, "vertexTexture");
+    glEnableVertexAttribArray(vTexture);
+
+    modelAttrib = glGetUniformLocation(program, "model");
     viewAttrib = glGetUniformLocation(program, "view");
     projectionAttrib = glGetUniformLocation(program, "projection");
     cameraUniform = glGetUniformLocation(program, "camera");
@@ -201,12 +336,12 @@ void init()
     /*glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, sphere1.getInterleavedStride(), BUFFER_OFFSET(0));
 
     
-    glEnableVertexAttribArray(vPosition);
-    glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+    //glEnableVertexAttribArray(vPosition);
+    //glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo1);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo1);
-    glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, sphere1.getInterleavedStride(), BUFFER_OFFSET(0));
+    //glBindBuffer(GL_ARRAY_BUFFER, vbo1);
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo1);
+    //glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, sphere1.getInterleavedStride(), BUFFER_OFFSET(0));
 
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo2);
@@ -226,6 +361,7 @@ void init()
     glUniformMatrix4fv(projectionAttrib, 1, GL_FALSE, glm::value_ptr(projection));
 
     initLight();
+    initTexture();
 
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -244,122 +380,129 @@ void display(void)
     glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, sphere1.getInterleavedStride(),
         BUFFER_OFFSET(0));
     glVertexAttribPointer(vNormal, 3, GL_FLOAT, false, sphere1.getInterleavedStride(), (void*)(3 * sizeof(float)));
-    
+    glVertexAttribPointer(vTexture, 2, GL_FLOAT, false, sphere1.getInterleavedStride(), (void*)(6 * sizeof(float)));
+
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    trans = glm::mat4(1.0f);
-    trans = glm::rotate(trans, rotate, glm::vec3(0.0, 1.0, 0.0));
-    trans = glm::translate(trans, glm::vec3(0.15f, 0.0f, -0.3f));
-    trans = glm::scale(trans, glm::vec3(0.02f, 0.02f, 0.02f));
-    trans = glm::rotate(trans, rotate, glm::vec3(0.0, 1.0, 0.0));
-    glUniformMatrix4fv(transAttrib, 1, GL_FALSE, glm::value_ptr(trans));
+    glBindTexture(GL_TEXTURE_2D, texture1);
+    model = glm::mat4(1.0f);
+    model = glm::rotate(model, rotate, glm::vec3(0.0, 1.0, 0.0));
+    model = glm::translate(model, glm::vec3(0.15f, 0.0f, -0.3f));
+    model = glm::scale(model, glm::vec3(0.02f, 0.02f, 0.02f));
+    model = glm::rotate(model, rotate, glm::vec3(0.0, 1.0, 0.0));
+    glUniformMatrix4fv(modelAttrib, 1, GL_FALSE, glm::value_ptr(model));
 
     glUniform4fv(colorAttribute, 1, Angel::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 
     glDrawElements(GL_TRIANGLES, sphere1.getIndexCount(), GL_UNSIGNED_INT, (void*)0);
 
-
-    trans = glm::mat4(1.0f);
-    trans = glm::translate(trans, glm::vec3(0.0f, 0.0f, 0.0f));
-    trans = glm::scale(trans, glm::vec3(0.25f, 0.25f, 0.25f));
-    trans = glm::rotate(trans, rotate, glm::vec3(0.0, 1.0, 0.0));
-    glUniformMatrix4fv(transAttrib, 1, GL_FALSE, glm::value_ptr(trans));
+    glBindTexture(GL_TEXTURE_2D, texture10);
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(0.25f, 0.25f, 0.25f));
+    model = glm::rotate(model, rotate, glm::vec3(0.0, 1.0, 0.0));
+    glUniformMatrix4fv(modelAttrib, 1, GL_FALSE, glm::value_ptr(model));
 
     glUniform4fv(colorAttribute, 1, Angel::vec4(1.0f, 1.0f, 0.0f, 1.0f));
 
-    glDrawElements(GL_TRIANGLES, sphere2.getIndexCount(), GL_UNSIGNED_INT, (void*)0);
+    glDrawElements(GL_TRIANGLES, sphere1.getIndexCount(), GL_UNSIGNED_INT, (void*)0);
 
-
-    trans = glm::mat4(1.0f);
-    trans = glm::rotate(trans, rotate, glm::vec3(0.0, 1.0, 0.0));
-    trans = glm::translate(trans, glm::vec3(0.2f, 0.0f, 0.0f));
-    trans = glm::scale(trans, glm::vec3(0.025f, 0.025f, 0.025f));
-    trans = glm::rotate(trans, rotate, glm::vec3(0.0, 1.0, 0.0));
-    glUniformMatrix4fv(transAttrib, 1, GL_FALSE, glm::value_ptr(trans));
-
-    glUniform4fv(colorAttribute, 1, Angel::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-
-    glDrawElements(GL_TRIANGLES, sphere3.getIndexCount(), GL_UNSIGNED_INT, (void*)0);
-
-
-    trans = glm::mat4(1.0f);
-    trans = glm::rotate(trans, rotate, glm::vec3(0.0, 1.0, 0.0));
-    trans = glm::translate(trans, glm::vec3(0.26f, 0.0f, 0.2f));
-    trans = glm::scale(trans, glm::vec3(0.045f, 0.045f, 0.045f));
-    trans = glm::rotate(trans, rotate, glm::vec3(0.0, 1.0, 0.0));
-    glUniformMatrix4fv(transAttrib, 1, GL_FALSE, glm::value_ptr(trans));
+    glBindTexture(GL_TEXTURE_2D, texture2);
+    model = glm::mat4(1.0f);
+    model = glm::rotate(model, rotate, glm::vec3(0.0, 1.0, 0.0));
+    model = glm::translate(model, glm::vec3(0.2f, 0.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(0.025f, 0.025f, 0.025f));
+    model = glm::rotate(model, rotate, glm::vec3(0.0, 1.0, 0.0));
+    glUniformMatrix4fv(modelAttrib, 1, GL_FALSE, glm::value_ptr(model));
 
     glUniform4fv(colorAttribute, 1, Angel::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 
-    glDrawElements(GL_TRIANGLES, sphere4.getIndexCount(), GL_UNSIGNED_INT, (void*)0);
+    glDrawElements(GL_TRIANGLES, sphere1.getIndexCount(), GL_UNSIGNED_INT, (void*)0);
 
-
-    trans = glm::mat4(1.0f);
-    trans = glm::rotate(trans, rotate, glm::vec3(0.0, 1.0, 0.0));
-    trans = glm::translate(trans, glm::vec3(0.35f, 0.0f, 0.2f));
-    trans = glm::scale(trans, glm::vec3(0.035f, 0.035f, 0.035f));
-    trans = glm::rotate(trans, rotate, glm::vec3(0.0, 1.0, 0.0));
-    glUniformMatrix4fv(transAttrib, 1, GL_FALSE, glm::value_ptr(trans));
-
-    glUniform4fv(colorAttribute, 1, Angel::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-
-    glDrawElements(GL_TRIANGLES, sphere5.getIndexCount(), GL_UNSIGNED_INT, (void*)0);
-
-    trans = glm::mat4(1.0f);
-    trans = glm::rotate(trans, rotate, glm::vec3(0.0, 1.0, 0.0));
-    trans = glm::translate(trans, glm::vec3(0.5f, 0.0f, -0.4f));
-    trans = glm::scale(trans, glm::vec3(0.17f, 0.17f, 0.17f));
-    trans = glm::rotate(trans, rotate, glm::vec3(0.0, 1.0, 0.0));
-    glUniformMatrix4fv(transAttrib, 1, GL_FALSE, glm::value_ptr(trans));
+    glBindTexture(GL_TEXTURE_2D, texture3);
+    model = glm::mat4(1.0f);
+    model = glm::rotate(model, rotate, glm::vec3(0.0, 1.0, 0.0));
+    model = glm::translate(model, glm::vec3(0.26f, 0.0f, 0.2f));
+    model = glm::scale(model, glm::vec3(0.045f, 0.045f, 0.045f));
+    model = glm::rotate(model, rotate, glm::vec3(0.0, 1.0, 0.0));
+    glUniformMatrix4fv(modelAttrib, 1, GL_FALSE, glm::value_ptr(model));
 
     glUniform4fv(colorAttribute, 1, Angel::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 
-    glDrawElements(GL_TRIANGLES, sphere6.getIndexCount(), GL_UNSIGNED_INT, (void*)0);
+    glDrawElements(GL_TRIANGLES, sphere1.getIndexCount(), GL_UNSIGNED_INT, (void*)0);
 
-    trans = glm::mat4(1.0f);
-    trans = glm::rotate(trans, rotate, glm::vec3(0.0, 1.0, 0.0));
-    trans = glm::translate(trans, glm::vec3(-0.7f, 0.0f, 0.7f));
-    trans = glm::scale(trans, glm::vec3(0.13f, 0.13f, 0.13f));
-    trans = glm::rotate(trans, rotate, glm::vec3(0.0, 1.0, 0.0));
-    glUniformMatrix4fv(transAttrib, 1, GL_FALSE, glm::value_ptr(trans));
+    glBindTexture(GL_TEXTURE_2D, texture4);
+    model = glm::mat4(1.0f);
+    model = glm::rotate(model, rotate, glm::vec3(0.0, 1.0, 0.0));
+    model = glm::translate(model, glm::vec3(0.35f, 0.0f, 0.2f));
+    model = glm::scale(model, glm::vec3(0.035f, 0.035f, 0.035f));
+    model = glm::rotate(model, rotate, glm::vec3(0.0, 1.0, 0.0));
+    glUniformMatrix4fv(modelAttrib, 1, GL_FALSE, glm::value_ptr(model));
+
+    glUniform4fv(colorAttribute, 1, Angel::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+    glDrawElements(GL_TRIANGLES, sphere1.getIndexCount(), GL_UNSIGNED_INT, (void*)0);
+
+    glBindTexture(GL_TEXTURE_2D, texture5);
+    model = glm::mat4(1.0f);
+    model = glm::rotate(model, rotate, glm::vec3(0.0, 1.0, 0.0));
+    model = glm::translate(model, glm::vec3(0.5f, 0.0f, -0.4f));
+    model = glm::scale(model, glm::vec3(0.17f, 0.17f, 0.17f));
+    model = glm::rotate(model, rotate, glm::vec3(0.0, 1.0, 0.0));
+    glUniformMatrix4fv(modelAttrib, 1, GL_FALSE, glm::value_ptr(model));
+
+    glUniform4fv(colorAttribute, 1, Angel::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+    glDrawElements(GL_TRIANGLES, sphere1.getIndexCount(), GL_UNSIGNED_INT, (void*)0);
+
+    glBindTexture(GL_TEXTURE_2D, texture6);
+    model = glm::mat4(1.0f);
+    model = glm::rotate(model, rotate, glm::vec3(0.0, 1.0, 0.0));
+    model = glm::translate(model, glm::vec3(-0.7f, 0.0f, 0.7f));
+    model = glm::scale(model, glm::vec3(0.13f, 0.13f, 0.13f));
+    model = glm::rotate(model, rotate, glm::vec3(0.0, 1.0, 0.0));
+    glUniformMatrix4fv(modelAttrib, 1, GL_FALSE, glm::value_ptr(model));
 
     glUniform4fv(colorAttribute, 1, Angel::vec4(0.0f, 0.3f, 0.6f, 1.0f));
 
-    glDrawElements(GL_TRIANGLES, sphere7.getIndexCount(), GL_UNSIGNED_INT, (void*)0);
+    glDrawElements(GL_TRIANGLES, sphere1.getIndexCount(), GL_UNSIGNED_INT, (void*)0);
 
-    trans = glm::mat4(1.0f);
-    trans = glm::rotate(trans, rotate, glm::vec3(0.0, 1.0, 0.0));
-    trans = glm::translate(trans, glm::vec3(-0.7f, 0.0f, 0.7f));
-    trans = glm::scale(trans, glm::vec3(0.18f, 0.013f, 0.18f));
-    trans = glm::rotate(trans, rotate, glm::vec3(1.0, 1.0, 0.0));
-    glUniformMatrix4fv(transAttrib, 1, GL_FALSE, glm::value_ptr(trans));
+    glBindTexture(GL_TEXTURE_2D, texture7);
+    model = glm::mat4(1.0f);
+    model = glm::rotate(model, rotate, glm::vec3(0.0, 1.0, 0.0));
+    model = glm::translate(model, glm::vec3(-0.7f, 0.0f, 0.7f));
+    model = glm::scale(model, glm::vec3(0.18f, 0.013f, 0.18f));
+    model = glm::rotate(model, rotate, glm::vec3(1.0, 1.0, 0.0));
+    glUniformMatrix4fv(modelAttrib, 1, GL_FALSE, glm::value_ptr(model));
 
     glUniform4fv(colorAttribute, 1, Angel::vec4(0.5f, 1.0f, 0.75f, 1.0f));
 
-    glDrawElements(GL_TRIANGLES, sphere7.getIndexCount(), GL_UNSIGNED_INT, (void*)0);
+    glDrawElements(GL_TRIANGLES, sphere1.getIndexCount(), GL_UNSIGNED_INT, (void*)0);
 
-    trans = glm::mat4(1.0f);
-    trans = glm::rotate(trans, rotate, glm::vec3(0.0, 1.0, 0.0));
-    trans = glm::translate(trans, glm::vec3(0.85f, 0.0f, -0.85f));
-    trans = glm::scale(trans, glm::vec3(0.09f, 0.09f, 0.09f));
-    trans = glm::rotate(trans, rotate, glm::vec3(0.0, 1.0, 0.0));
-    glUniformMatrix4fv(transAttrib, 1, GL_FALSE, glm::value_ptr(trans));
-
-    glUniform4fv(colorAttribute, 1, Angel::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-
-    glDrawElements(GL_TRIANGLES, sphere8.getIndexCount(), GL_UNSIGNED_INT, (void*)0);
-
-    trans = glm::mat4(1.0f);
-    trans = glm::rotate(trans, rotate, glm::vec3(0.0, 1.0, 0.0));
-    trans = glm::translate(trans, glm::vec3(1.0f, 0.0f, 0.5f));
-    trans = glm::scale(trans, glm::vec3(0.08f, 0.08f, 0.08f));
-    trans = glm::rotate(trans, rotate, glm::vec3(0.0, 1.0, 0.0));
-    glUniformMatrix4fv(transAttrib, 1, GL_FALSE, glm::value_ptr(trans));
+    glBindTexture(GL_TEXTURE_2D, texture8);
+    model = glm::mat4(1.0f);
+    model = glm::rotate(model, rotate, glm::vec3(0.0, 1.0, 0.0));
+    model = glm::translate(model, glm::vec3(0.85f, 0.0f, -0.85f));
+    model = glm::scale(model, glm::vec3(0.09f, 0.09f, 0.09f));
+    model = glm::rotate(model, rotate, glm::vec3(0.0, 1.0, 0.0));
+    glUniformMatrix4fv(modelAttrib, 1, GL_FALSE, glm::value_ptr(model));
 
     glUniform4fv(colorAttribute, 1, Angel::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 
-    glDrawElements(GL_TRIANGLES, sphere9.getIndexCount(), GL_UNSIGNED_INT, (void*)0);
+    glDrawElements(GL_TRIANGLES, sphere1.getIndexCount(), GL_UNSIGNED_INT, (void*)0);
+
+    glBindTexture(GL_TEXTURE_2D, texture9);
+    model = glm::mat4(1.0f);
+    model = glm::rotate(model, rotate, glm::vec3(0.0, 1.0, 0.0));
+    model = glm::translate(model, glm::vec3(1.0f, 0.0f, 0.5f));
+    model = glm::scale(model, glm::vec3(0.08f, 0.08f, 0.08f));
+    model = glm::rotate(model, rotate, glm::vec3(0.0, 1.0, 0.0));
+    glUniformMatrix4fv(modelAttrib, 1, GL_FALSE, glm::value_ptr(model));
+
+    glUniform4fv(colorAttribute, 1, Angel::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+    glDrawElements(GL_TRIANGLES, sphere1.getIndexCount(), GL_UNSIGNED_INT, (void*)0);
 
 
     view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
