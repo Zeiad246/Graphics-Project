@@ -17,11 +17,13 @@ struct Material {
 };
 
 in vec3 normal, position;
+in vec2 texCoord;
 
 uniform vec3 camera;
 uniform DirectionalLight directionalLight;
 uniform PointLight pointLights[LIGHTS_COUNT];
 uniform Material material;
+uniform sampler2D tex;
 
 out vec4 color;
 
@@ -36,7 +38,7 @@ void main()
 	vec4 result = CalculateDirectionalLight(directionalLight, norm, viewDir);
 
 	for(int i = 0; i < LIGHTS_COUNT; i++) {
-		result += CalculatePointLight(pointLights[i], norm, position, viewDir);
+		//result += CalculatePointLight(pointLights[i], norm, position, viewDir);
 	}
 
 	color = result;
@@ -45,16 +47,16 @@ void main()
 }
 
 vec4 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir) {
-	vec4 ambient = light.ambient * material.ambient;
+	vec4 ambient = light.ambient * material.ambient * texture(tex, texCoord);
 	
 	vec3 lightDir = normalize(- light.direction.xyz);
 	
 	float Kd = max(dot(normal, lightDir), 0.0);
-	vec4 diffuse = Kd * light.diffuse * material.diffuse;
+	vec4 diffuse = Kd * light.diffuse * material.diffuse * texture(tex, texCoord);
 
 	vec3 reflectDir = reflect(-lightDir, normal);
 	float Ks = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-	vec4 specular = Ks * light.specular * material.specular;
+	vec4 specular = Ks * light.specular * material.specular * texture(tex, texCoord);
 
 	return ambient + diffuse + specular;
 }
